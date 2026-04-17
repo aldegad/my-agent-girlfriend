@@ -1,0 +1,17 @@
+[project]
+name = "my-agent-girlfriend"
+version = "0.1.0"
+description = "Persona-driven image reply helper with bubble composition for Codex skills."
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.116.0",
+  "Pillow>=11.0.0",
+  "uvicorn>=0.35.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = true

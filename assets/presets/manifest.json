@@ -1,0 +1,352 @@
+{
+  "character": {
+    "version": "v1",
+    "approval_status": "approved",
+    "base_asset": "assets/base/base-character-v1-approved.png",
+    "style": {
+      "hair": "long red hair",
+      "outfit": "bright summer dailywear with a soft open neckline and blue floral skirt",
+      "medium": "2D anime illustration",
+      "framing": "upper_body_to_half_body",
+      "tone": "wholesome"
+    }
+  },
+  "presets": [
+    {
+      "id": "neutral_smile",
+      "emotion_tags": [
+        "neutral",
+        "smile",
+        "calm",
+        "warm"
+      ],
+      "framing": "upper_body",
+      "camera": "eye_level",
+      "bubble_rect": [
+        54,
+        48,
+        710,
+        332
+      ],
+      "tail_anchor": [
+        506,
+        374
+      ],
+      "font_size_range": [
+        34,
+        54
+      ],
+      "notes": "Default everyday preset.",
+      "image_path": "assets/presets/neutral_smile.png",
+      "status": "ready"
+    },
+    {
+      "id": "cheerful_bright",
+      "emotion_tags": [
+        "happy",
+        "bright",
+        "cheerful",
+        "excited"
+      ],
+      "framing": "upper_body",
+      "camera": "eye_level",
+      "bubble_rect": [
+        42,
+        42,
+        720,
+        318
+      ],
+      "tail_anchor": [
+        522,
+        360
+      ],
+      "font_size_range": [
+        34,
+        54
+      ],
+      "notes": "Wider bubble for energetic lines.",
+      "image_path": "assets/presets/cheerful_bright.png",
+      "status": "ready"
+    },
+    {
+      "id": "bashful_blush",
+      "emotion_tags": [
+        "bashful",
+        "shy",
+        "blush",
+        "embarrassed"
+      ],
+      "framing": "upper_body",
+      "camera": "eye_level",
+      "bubble_rect": [
+        48,
+        44,
+        700,
+        322
+      ],
+      "tail_anchor": [
+        470,
+        372
+      ],
+      "font_size_range": [
+        34,
+        54
+      ],
+      "notes": "Shy response preset.",
+      "image_path": "assets/presets/bashful_blush.png",
+      "status": "ready"
+    },
+    {
+      "id": "playful_tease",
+      "emotion_tags": [
+        "tease",
+        "playful",
+        "mischief",
+        "grin"
+      ],
+      "framing": "upper_body",
+      "camera": "eye_level",
+      "bubble_rect": [
+        40,
+        42,
+        726,
+        316
+      ],
+      "tail_anchor": [
+        536,
+        350
+      ],
+      "font_size_range": [
+        34,
+        54
+      ],
+      "notes": "Mischievous and lightly teasing.",
+      "image_path": "assets/presets/playful_tease.png",
+      "status": "ready"
+    },
+    {
+      "id": "curious_tilt",
+      "emotion_tags": [
+        "curious",
+        "wondering",
+        "question",
+        "tilt"
+      ],
+      "framing": "upper_body",
+      "camera": "eye_level",
+      "bubble_rect": [
+        56,
+        48,
+        710,
+        332
+      ],
+      "tail_anchor": [
+        450,
+        370
+      ],
+      "font_size_range": [
+        34,
+        54
+      ],
+      "notes": "Questioning head tilt preset.",
+      "image_path": "assets/presets/curious_tilt.png",
+      "status": "ready"
+    },
+    {
+      "id": "surprised_wide",
+      "emotion_tags": [
+        "surprised",
+        "shock",
+        "wide",
+        "startled"
+      ],
+      "framing": "upper_body",
+      "camera": "eye_level",
+      "bubble_rect": [
+        38,
+        40,
+        726,
+        314
+      ],
+      "tail_anchor": [
+        500,
+        356
+      ],
+      "font_size_range": [
+        34,
+        54
+      ],
+      "notes": "Startled reaction preset.",
+      "image_path": "assets/presets/surprised_wide.png",
+      "status": "ready"
+    },
+    {
+      "id": "pouty",
+      "emotion_tags": [
+        "pouty",
+        "sulky",
+        "jealous",
+        "upset"
+      ],
+      "framing": "upper_body",
+      "camera": "eye_level",
+      "bubble_rect": [
+        52,
+        46,
+        706,
+        326
+      ],
+      "tail_anchor": [
+        468,
+        380
+      ],
+      "font_size_range": [
+        34,
+        54
+      ],
+      "notes": "Puffed-cheek pout or mild jealousy.",
+      "image_path": "assets/presets/pouty.png",
+      "status": "ready"
+    },
+    {
+      "id": "worried",
+      "emotion_tags": [
+        "worried",
+        "anxious",
+        "concerned",
+        "careful"
+      ],
+      "framing": "upper_body",
+      "camera": "eye_level",
+      "bubble_rect": [
+        56,
+        46,
+        702,
+        330
+      ],
+      "tail_anchor": [
+        480,
+        382
+      ],
+      "font_size_range": [
+        34,
+        54
+      ],
+      "notes": "Concerned or uneasy preset.",
+      "image_path": "assets/presets/worried.png",
+      "status": "ready"
+    },
+    {
+      "id": "teary",
+      "emotion_tags": [
+        "teary",
+        "sad",
+        "holding_back_tears",
+        "hurt"
+      ],
+      "framing": "upper_body",
+      "camera": "eye_level",
+      "bubble_rect": [
+        50,
+        42,
+        706,
+        324
+      ],
+      "tail_anchor": [
+        484,
+        376
+      ],
+      "font_size_range": [
+        34,
+        52
+      ],
+      "notes": "Watery eyes, not fully crying.",
+      "image_path": "assets/presets/teary.png",
+      "status": "ready"
+    },
+    {
+      "id": "crying_closed_eyes",
+      "emotion_tags": [
+        "crying",
+        "sobbing",
+        "closed_eyes",
+        "sad"
+      ],
+      "framing": "upper_body",
+      "camera": "eye_level",
+      "bubble_rect": [
+        48,
+        36,
+        712,
+        310
+      ],
+      "tail_anchor": [
+        498,
+        358
+      ],
+      "font_size_range": [
+        32,
+        50
+      ],
+      "notes": "Open crying preset.",
+      "image_path": "assets/presets/crying_closed_eyes.png",
+      "status": "ready"
+    },
+    {
+      "id": "pleading_look_up",
+      "emotion_tags": [
+        "pleading",
+        "look_up",
+        "please",
+        "don't_leave"
+      ],
+      "framing": "half_body",
+      "camera": "slight_high_angle",
+      "bubble_rect": [
+        54,
+        34,
+        706,
+        290
+      ],
+      "tail_anchor": [
+        396,
+        418
+      ],
+      "font_size_range": [
+        32,
+        50
+      ],
+      "notes": "Viewer looks slightly down while character looks up.",
+      "image_path": "assets/presets/pleading_look_up.png",
+      "status": "ready"
+    },
+    {
+      "id": "apology_look_up",
+      "emotion_tags": [
+        "apology",
+        "sorry",
+        "look_up",
+        "remorse"
+      ],
+      "framing": "half_body",
+      "camera": "slight_high_angle",
+      "bubble_rect": [
+        52,
+        34,
+        704,
+        288
+      ],
+      "tail_anchor": [
+        404,
+        424
+      ],
+      "font_size_range": [
+        32,
+        50
+      ],
+      "notes": "Apologetic upward-looking preset.",
+      "image_path": "assets/presets/apology_look_up.png",
+      "status": "ready"
+    }
+  ]
+}

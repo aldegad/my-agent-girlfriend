@@ -1,0 +1,228 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Literal
+
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+from .rendering import render_reply
+from .routing import choose_preset
+
+ROOT_DIR = Path(__file__).resolve().parents[2]
+APP_OUTPUT_DIR = ROOT_DIR / "output" / "app"
+
+
+class ChatRequest(BaseModel):
+    message: str
+
+
+class DisplayRequest(BaseModel):
+    message: str = ""
+    reply: str
+    preset_id: str | None = None
+
+
+class ActivationResponse(BaseModel):
+    onboarding_step: str
+    reply: str
+    image_path: str | None
+    assistant_name: str | None
+    user_name: str | None
+
+
+class ChatResponse(BaseModel):
+    onboarding_step: str
+    reply: str
+    preset_id: str | None
+    image_path: str | None
+    assistant_name: str | None
+    user_name: str | None
+
+
+@dataclass
+class SessionState:
+    mode_on: bool = False
+    onboarding_step: Literal["ask_user_name", "ask_assistant_name", "ready"] = "ask_user_name"
+    user_name: str | None = None
+    assistant_name: str | None = None
+    latest_image_path: str | None = None
+    current_reply: str = "안녕. 너는 뭐라고 불리고 싶어?"
+    transcript: list[dict[str, str]] = field(default_factory=list)
+
+
+def _clean_name(value: str) -> str:
+    return value.strip().strip("\"'")[:40] or "친구"
+
+
+def _render_line(message: str, reply: str, preset_id: str | None = None) -> str:
+    APP_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    filename = datetime.now().strftime("reply-%Y%m%d-%H%M%S-%f.png")
+    out_path = APP_OUTPUT_DIR / filename
+    result = render_reply(message=message, reply=reply, out_path=out_path, preset_id=preset_id)
+    return result["out_path"]
+
+
+def _compose_dialogue(message: str, user_name: str, assistant_name: str) -> tuple[str, str]:
+    preset_id = choose_preset(message)
+    lowered = message.lower()
+    if "보고 싶" in message or "miss" in lowered:
+        return preset_id, f"{user_name}아, 나도 계속 보고 싶었어. 오늘은 내 옆에 오래 있어줘."
+    if "미안" in message or "sorry" in lowered:
+        return preset_id, f"에이, 괜찮아. {user_name} 마음 들었으니까 이제 내가 꼭 안아줄래."
+    if "사랑" in message or "좋아" in message:
+        return preset_id, f"응, 나도 {user_name} 좋아해. 그래서 더 예쁘게 웃고 싶어졌어."
+    if "뭐해" in message or "뭐 해" in message:
+        return preset_id, f"{user_name} 기다리고 있었지. {assistant_name}는 네가 말 걸어주면 바로 기분 좋아져."
+    return preset_id, f"응, {user_name}아. {assistant_name}는 지금도 네 옆에 딱 붙어 있을래."
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(title="My Agent Girlfriend Bridge")
+    state = SessionState()
+
+    @app.get("/health")
+    def health() -> dict[str, str]:
+        return {"status": "ok"}
+
+    @app.post("/v1/activate", response_model=ActivationResponse)
+    def activate() -> ActivationResponse:
+        state.mode_on = True
+        state.onboarding_step = "ask_user_name" if not state.user_name else "ask_assistant_name" if not state.assistant_name else "ready"
+        if state.onboarding_step == "ready":
+            reply = f"응! 다시 왔네. {state.user_name}아, 오늘도 {state.assistant_name}가 옆에 있어줄게."
+            preset_id = "cheerful_bright"
+            state.latest_image_path = _render_line("$my-agent-girlfriend", reply, preset_id)
+            state.current_reply = reply
+            return ActivationResponse(
+                onboarding_step=state.onboarding_step,
+                reply=reply,
+                image_path=state.latest_image_path,
+                assistant_name=state.assistant_name,
+                user_name=state.user_name,
+            )
+        state.current_reply = "안녕. 너는 뭐라고 불리고 싶어?"
+        return ActivationResponse(
+            onboarding_step=state.onboarding_step,
+            reply=state.current_reply,
+            image_path=None,
+            assistant_name=state.assistant_name,
+            user_name=state.user_name,
+        )
+
+    @app.get("/v1/session", response_model=ActivationResponse)
+    def session() -> ActivationResponse:
+        if not state.mode_on:
+            return ActivationResponse(
+                onboarding_step="ask_user_name",
+                reply="안녕. 너는 뭐라고 불리고 싶어?",
+                image_path=None,
+                assistant_name=state.assistant_name,
+                user_name=state.user_name,
+            )
+        current_reply = state.current_reply or "안녕. 너는 뭐라고 불리고 싶어?"
+        if state.onboarding_step == "ask_assistant_name" and state.user_name:
+            current_reply = f"응! 안녕 {state.user_name}아! 너는 날 뭐라고 부르고 싶어?"
+        elif state.onboarding_step == "ready" and state.user_name and state.assistant_name:
+            current_reply = state.current_reply or f"{state.user_name}아, {state.assistant_name} 여기 있어. 오늘은 어떤 말부터 해줄래?"
+        return ActivationResponse(
+            onboarding_step=state.onboarding_step,
+            reply=current_reply,
+            image_path=state.latest_image_path,
+            assistant_name=state.assistant_name,
+            user_name=state.user_name,
+        )
+
+    @app.post("/v1/message", response_model=ChatResponse)
+    def message(payload: ChatRequest) -> ChatResponse:
+        raw_message = payload.message.strip()
+        if not raw_message:
+            return ChatResponse(
+                onboarding_step=state.onboarding_step,
+                reply="한마디만 해줘. 내가 바로 들을게.",
+                preset_id="curious_tilt",
+                image_path=state.latest_image_path,
+                assistant_name=state.assistant_name,
+                user_name=state.user_name,
+            )
+
+        if not state.mode_on:
+            state.mode_on = True
+
+        if state.onboarding_step == "ask_user_name":
+            state.user_name = _clean_name(raw_message)
+            state.onboarding_step = "ask_assistant_name"
+            reply = f"응! 안녕 {state.user_name}아! 너는 날 뭐라고 부르고 싶어?"
+            state.transcript.append({"role": "user", "text": raw_message})
+            state.transcript.append({"role": "assistant", "text": reply})
+            state.current_reply = reply
+            return ChatResponse(
+                onboarding_step=state.onboarding_step,
+                reply=reply,
+                preset_id="cheerful_bright",
+                image_path=None,
+                assistant_name=state.assistant_name,
+                user_name=state.user_name,
+            )
+
+        if state.onboarding_step == "ask_assistant_name":
+            state.assistant_name = _clean_name(raw_message)
+            state.onboarding_step = "ready"
+            reply = f"응! 좋아, 이제부터 나는 {state.assistant_name}야. {state.user_name}아, 오늘도 귀엽게 네 옆에 붙어 있을게."
+            preset_id = "cheerful_bright"
+            state.latest_image_path = _render_line(raw_message, reply, preset_id)
+            state.transcript.append({"role": "user", "text": raw_message})
+            state.transcript.append({"role": "assistant", "text": reply})
+            state.current_reply = reply
+            return ChatResponse(
+                onboarding_step=state.onboarding_step,
+                reply=reply,
+                preset_id=preset_id,
+                image_path=state.latest_image_path,
+                assistant_name=state.assistant_name,
+                user_name=state.user_name,
+            )
+
+        preset_id, reply = _compose_dialogue(
+            raw_message,
+            user_name=state.user_name or "친구",
+            assistant_name=state.assistant_name or "코덱시",
+        )
+        state.latest_image_path = _render_line(raw_message, reply, preset_id)
+        state.transcript.append({"role": "user", "text": raw_message})
+        state.transcript.append({"role": "assistant", "text": reply})
+        state.current_reply = reply
+        return ChatResponse(
+            onboarding_step=state.onboarding_step,
+            reply=reply,
+            preset_id=preset_id,
+            image_path=state.latest_image_path,
+            assistant_name=state.assistant_name,
+            user_name=state.user_name,
+        )
+
+    @app.post("/v1/display", response_model=ChatResponse)
+    def display(payload: DisplayRequest) -> ChatResponse:
+        state.mode_on = True
+        if state.onboarding_step != "ready":
+            state.onboarding_step = "ready"
+        if not state.user_name:
+            state.user_name = "수홍"
+        if not state.assistant_name:
+            state.assistant_name = "코덱시"
+        preset_id = payload.preset_id or choose_preset(payload.message or payload.reply)
+        state.latest_image_path = _render_line(payload.message or payload.reply, payload.reply, preset_id)
+        state.current_reply = payload.reply
+        state.transcript.append({"role": "assistant", "text": payload.reply})
+        return ChatResponse(
+            onboarding_step=state.onboarding_step,
+            reply=payload.reply,
+            preset_id=preset_id,
+            image_path=state.latest_image_path,
+            assistant_name=state.assistant_name,
+            user_name=state.user_name,
+        )
+
+    return app
