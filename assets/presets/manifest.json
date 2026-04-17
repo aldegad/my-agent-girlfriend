@@ -375,6 +375,62 @@
       "notes": "Playful head-down teasing pose with hands behind the back.",
       "image_path": "assets/presets/playful_behind_back.png",
       "status": "ready"
+    },
+    {
+      "id": "pleading_look_up_v2",
+      "emotion_tags": [
+        "pleading",
+        "look_up",
+        "shy",
+        "charming"
+      ],
+      "framing": "half_body",
+      "camera": "slight_high_angle",
+      "bubble_rect": [
+        54,
+        34,
+        706,
+        290
+      ],
+      "tail_anchor": [
+        396,
+        418
+      ],
+      "font_size_range": [
+        32,
+        50
+      ],
+      "notes": "V2 pleading look-up with a sweeter, more charming mood.",
+      "image_path": "assets/presets/v2/pleading_look_up.png",
+      "status": "ready"
+    },
+    {
+      "id": "apology_look_up_v2",
+      "emotion_tags": [
+        "apology",
+        "sorry",
+        "look_up",
+        "charming"
+      ],
+      "framing": "half_body",
+      "camera": "slight_high_angle",
+      "bubble_rect": [
+        52,
+        34,
+        704,
+        288
+      ],
+      "tail_anchor": [
+        404,
+        424
+      ],
+      "font_size_range": [
+        32,
+        50
+      ],
+      "notes": "V2 apology look-up with a softer, more appealing expression.",
+      "image_path": "assets/presets/v2/apology_look_up.png",
+      "status": "ready"
     }
   ]
 }
