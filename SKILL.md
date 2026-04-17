@@ -134,7 +134,7 @@ python3 scripts/render_reply.py --message "<user message>" --reply "<dialogue>" 
 python3 scripts/play_voice.py --clip <id> --background
 ```
 
-- Available clips: `hi`, `dekita`, `otsukare`, `yatta`, `tadaima` (reactions); `uun`, `etto`, `a`, `fufu` (ambient/thinking).
+- Available clips: `hi`, `dekita`, `otsukare`, `yatta`, `tadaima` (reactions); `uun`, `etto`, `a`, `fufu`, `un`, `hee` (ambient/thinking).
 - **Every turn, you MUST play a voice clip alongside the overlay push.** Same status as `push_overlay.py` — never skip. Silence on a turn means a regression, not a stylistic choice.
 - **Clip mapping (use the most specific match; fall through to the fallback if nothing fits):**
   - Greeting / first hello → `hi`
@@ -145,7 +145,9 @@ python3 scripts/play_voice.py --clip <id> --background
   - Thinking out loud / mild puzzlement → `uun`
   - Hesitation before an answer → `etto`
   - Sudden realization / "oh!" → `a`
-  - **Default fallback (informational replies, neutral chat, anything else) → `fufu`** — a soft giggle is safe with nearly every tone and keeps the character audible on routine turns.
+  - Soft amused laugh / playful warmth → `fufu`
+  - Curious "oh really?" reaction to information → `hee`
+  - **Default fallback (any neutral/informational reply, anything that doesn't fit above) → `un`** — a soft "mm, yeah" acknowledgement, safe with any tone including serious or factual content.
 - **Dialogue text must stay in the user's language.** Detect the language the user is writing in and respond entirely in that language (Korean, English, Japanese, Chinese, Spanish — whatever they use). Never inline the Japanese phrase from a voice clip into the spoken dialogue (e.g., do NOT write "やったぁ! that's great…" in the reply). The audio carries the Japanese flavor; the readable text stays purely in the user's own language. Mixing the two feels forced and breaks immersion.
 - The desktop overlay has a speaker-toggle button in the top-right corner that flips a `muted` flag on the bridge. `play_voice.py` checks this flag and silently skips playback when muted, so it is always safe to call — call it every turn regardless.
 - To regenerate or add clips, edit `scripts/generate_voices.py` and run `source ~/.claude/.env.gemini && python3 scripts/generate_voices.py`.

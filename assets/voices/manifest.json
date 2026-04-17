@@ -63,6 +63,20 @@
       "context": "soft amused giggle",
       "voice": "Leda",
       "path": "assets/voices/fufu.wav"
+    },
+    {
+      "id": "un",
+      "text": "うん。",
+      "context": "soft gentle acknowledgement, calm and neutral",
+      "voice": "Leda",
+      "path": "assets/voices/un.wav"
+    },
+    {
+      "id": "hee",
+      "text": "へぇ〜",
+      "context": "curious 'oh, really?' reaction, mildly impressed",
+      "voice": "Leda",
+      "path": "assets/voices/hee.wav"
     }
   ]
 }

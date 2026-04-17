@@ -69,6 +69,16 @@ CLIPS = [
         "text": "ふふっ",
         "context": "soft amused giggle",
     },
+    {
+        "id": "un",
+        "text": "うん。",
+        "context": "soft gentle acknowledgement, calm and neutral",
+    },
+    {
+        "id": "hee",
+        "text": "へぇ〜",
+        "context": "curious 'oh, really?' reaction, mildly impressed",
+    },
 ]
 
 
