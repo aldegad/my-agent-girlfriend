@@ -377,6 +377,34 @@
       "status": "ready"
     },
     {
+      "id": "sleeping_hands_folded",
+      "emotion_tags": [
+        "sleeping",
+        "calm",
+        "idle",
+        "resting"
+      ],
+      "framing": "upper_body",
+      "camera": "eye_level",
+      "bubble_rect": [
+        54,
+        48,
+        710,
+        332
+      ],
+      "tail_anchor": [
+        506,
+        374
+      ],
+      "font_size_range": [
+        34,
+        54
+      ],
+      "notes": "Idle/onboarding starting frame with eyes closed and hands folded.",
+      "image_path": "assets/presets/sleeping_hands_folded.png",
+      "status": "ready"
+    },
+    {
       "id": "pleading_look_up_v2",
       "emotion_tags": [
         "pleading",
