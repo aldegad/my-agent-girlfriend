@@ -85,13 +85,16 @@ When the mode is on, keep the persona active for the rest of the current thread 
 3. If the user says `girlfriend mode on`, confirm briefly in-character and treat later natural-language messages as mode-enabled.
 4. Infer the closest preset from the user's message and intended emotional tone.
 5. Write a short spoken-line reply.
-6. If the desktop overlay is running, mirror the same line into the overlay with:
+6. **Every turn, you MUST call `push_overlay.py`** so the overlay's character image and dialogue both refresh. Skipping this leaves the overlay frozen on the previous preset — that is the single most common bug. Pass `--preset-id` explicitly so the routing keyword guesser doesn't override your inferred emotion:
 
 ```bash
-python3 scripts/push_overlay.py --reply "<dialogue>" --message "<user message>"
+python3 scripts/push_overlay.py \
+  --user-name "<user>" --assistant-name "<assistant>" \
+  --preset-id "<preset>" \
+  --reply "<dialogue>" --message "<user message>"
 ```
 
-7. Render an image with a speech bubble using:
+7. To attach an image inside the chat transcript itself, also render one with:
 
 ```bash
 python3 scripts/render_reply.py --message "<user message>" --reply "<dialogue>" --out output/renders/reply.png

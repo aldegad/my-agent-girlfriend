@@ -9,7 +9,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Push a rendered line to the desktop overlay.")
     parser.add_argument("--reply", required=True)
     parser.add_argument("--message", default="")
-    parser.add_argument("--preset", default=None)
+    parser.add_argument("--preset", "--preset-id", dest="preset", default=None)
     parser.add_argument("--user-name", dest="user_name", default=None)
     parser.add_argument("--assistant-name", dest="assistant_name", default=None)
     parser.add_argument("--url", default="http://127.0.0.1:44777/v1/display")
