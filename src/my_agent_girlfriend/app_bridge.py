@@ -191,17 +191,13 @@ def create_app() -> FastAPI:
                 user_name=state.user_name,
                 muted=state.muted,
             )
-        current_reply = state.current_reply or "안녕. 너는 뭐라고 불리고 싶어?"
-        if state.onboarding_step == "ask_assistant_name" and state.user_name:
-            current_reply = f"응! 안녕 {state.user_name}아! 너는 날 뭐라고 부르고 싶어?"
-        elif state.onboarding_step == "ready" and state.user_name and state.assistant_name:
-            current_reply = state.current_reply or f"{state.user_name}아, {state.assistant_name} 여기 있어. 오늘은 어떤 말부터 해줄래?"
         return ActivationResponse(
             onboarding_step=state.onboarding_step,
-            reply=current_reply,
+            reply=state.current_reply or "안녕. 너는 뭐라고 불리고 싶어?",
             image_path=state.latest_image_path,
             assistant_name=state.assistant_name,
             user_name=state.user_name,
+            muted=state.muted,
         )
 
     @app.post("/v1/message", response_model=ChatResponse)
@@ -290,16 +286,16 @@ def create_app() -> FastAPI:
     @app.post("/v1/display", response_model=ChatResponse)
     def display(payload: DisplayRequest) -> ChatResponse:
         state.mode_on = True
-        if state.onboarding_step != "ready":
-            state.onboarding_step = "ready"
         if payload.user_name:
             state.user_name = _clean_name(payload.user_name)
         if payload.assistant_name:
             state.assistant_name = _clean_name(payload.assistant_name)
-        if not state.user_name:
-            state.user_name = "???"
-        if not state.assistant_name:
-            state.assistant_name = "???"
+        if state.user_name and state.assistant_name:
+            state.onboarding_step = "ready"
+        elif state.user_name:
+            state.onboarding_step = "ask_assistant_name"
+        else:
+            state.onboarding_step = "ask_user_name"
         _maybe_persist()
         preset_id = payload.preset_id or choose_preset(payload.message or payload.reply)
         state.latest_image_path = _render_line(
