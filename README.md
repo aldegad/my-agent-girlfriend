@@ -5,7 +5,7 @@ A playful local desktop companion project for Claude Code and Codex.
 [English](#english) · [한국어](#한국어)
 
 <p align="center">
-  <img src="assets/base/base-character-v1-approved.png" alt="Base character (v1, approved)" width="420" />
+  <img src="assets/promo/github_date_banner.png" alt="My Agent Girlfriend" width="720" />
 </p>
 
 ---

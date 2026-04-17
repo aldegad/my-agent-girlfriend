@@ -165,11 +165,17 @@ def create_app() -> FastAPI:
                 muted=state.muted,
             )
         state.current_reply = "안녕. 너는 뭐라고 불리고 싶어?"
+        state.latest_image_path = _render_line(
+            "$my-agent-girlfriend",
+            state.current_reply,
+            "sleeping_hands_folded",
+            name_tag=None,
+        )
         _say(state.current_reply)
         return ActivationResponse(
             onboarding_step=state.onboarding_step,
             reply=state.current_reply,
-            image_path=None,
+            image_path=state.latest_image_path,
             assistant_name=state.assistant_name,
             user_name=state.user_name,
         )
@@ -219,6 +225,10 @@ def create_app() -> FastAPI:
             state.user_name = _clean_name(raw_message)
             state.onboarding_step = "ask_assistant_name"
             reply = f"응! 안녕 {state.user_name}아! 너는 날 뭐라고 부르고 싶어?"
+            preset_id = "sleeping_hands_folded"
+            state.latest_image_path = _render_line(
+                raw_message, reply, preset_id, name_tag=None
+            )
             state.transcript.append({"role": "user", "text": raw_message})
             state.transcript.append({"role": "assistant", "text": reply})
             state.current_reply = reply
@@ -226,8 +236,8 @@ def create_app() -> FastAPI:
             return ChatResponse(
                 onboarding_step=state.onboarding_step,
                 reply=reply,
-                preset_id="cheerful_bright",
-                image_path=None,
+                preset_id=preset_id,
+                image_path=state.latest_image_path,
                 assistant_name=state.assistant_name,
                 user_name=state.user_name,
                 muted=state.muted,
