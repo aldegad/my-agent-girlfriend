@@ -1,0 +1,68 @@
+{
+  "voice": "Leda",
+  "clips": [
+    {
+      "id": "hi",
+      "text": "こんにちは！",
+      "context": "cheerful greeting, bright and friendly",
+      "voice": "Leda",
+      "path": "assets/voices/hi.wav"
+    },
+    {
+      "id": "dekita",
+      "text": "できたよ〜！",
+      "context": "satisfied completion, soft and warm",
+      "voice": "Leda",
+      "path": "assets/voices/dekita.wav"
+    },
+    {
+      "id": "otsukare",
+      "text": "お疲れさま！",
+      "context": "warm appreciation after work",
+      "voice": "Leda",
+      "path": "assets/voices/otsukare.wav"
+    },
+    {
+      "id": "yatta",
+      "text": "やったぁ！",
+      "context": "delighted celebration, bouncy",
+      "voice": "Leda",
+      "path": "assets/voices/yatta.wav"
+    },
+    {
+      "id": "tadaima",
+      "text": "ただいま〜！",
+      "context": "homecoming, cozy and a bit playful",
+      "voice": "Leda",
+      "path": "assets/voices/tadaima.wav"
+    },
+    {
+      "id": "uun",
+      "text": "うーん…",
+      "context": "thoughtful, slightly puzzled hum",
+      "voice": "Leda",
+      "path": "assets/voices/uun.wav"
+    },
+    {
+      "id": "etto",
+      "text": "えっと…",
+      "context": "soft hesitation while thinking",
+      "voice": "Leda",
+      "path": "assets/voices/etto.wav"
+    },
+    {
+      "id": "a",
+      "text": "あっ！",
+      "context": "small surprised realization",
+      "voice": "Leda",
+      "path": "assets/voices/a.wav"
+    },
+    {
+      "id": "fufu",
+      "text": "ふふっ",
+      "context": "soft amused giggle",
+      "voice": "Leda",
+      "path": "assets/voices/fufu.wav"
+    }
+  ]
+}

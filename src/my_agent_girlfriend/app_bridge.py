@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -10,6 +11,10 @@ from pydantic import BaseModel
 
 from .rendering import render_reply
 from .routing import choose_preset
+
+
+def _say(reply: str) -> None:
+    print(f"\n💬 {reply}\n", flush=True, file=sys.stdout)
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 APP_OUTPUT_DIR = ROOT_DIR / "output" / "app"
@@ -23,6 +28,8 @@ class DisplayRequest(BaseModel):
     message: str = ""
     reply: str
     preset_id: str | None = None
+    user_name: str | None = None
+    assistant_name: str | None = None
 
 
 class ActivationResponse(BaseModel):
@@ -31,6 +38,7 @@ class ActivationResponse(BaseModel):
     image_path: str | None
     assistant_name: str | None
     user_name: str | None
+    muted: bool = False
 
 
 class ChatResponse(BaseModel):
@@ -40,6 +48,11 @@ class ChatResponse(BaseModel):
     image_path: str | None
     assistant_name: str | None
     user_name: str | None
+    muted: bool = False
+
+
+class MuteRequest(BaseModel):
+    muted: bool
 
 
 @dataclass
@@ -51,17 +64,29 @@ class SessionState:
     latest_image_path: str | None = None
     current_reply: str = "안녕. 너는 뭐라고 불리고 싶어?"
     transcript: list[dict[str, str]] = field(default_factory=list)
+    muted: bool = False
 
 
 def _clean_name(value: str) -> str:
     return value.strip().strip("\"'")[:40] or "친구"
 
 
-def _render_line(message: str, reply: str, preset_id: str | None = None) -> str:
+def _render_line(
+    message: str,
+    reply: str,
+    preset_id: str | None = None,
+    name_tag: str | None = None,
+) -> str:
     APP_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     filename = datetime.now().strftime("reply-%Y%m%d-%H%M%S-%f.png")
     out_path = APP_OUTPUT_DIR / filename
-    result = render_reply(message=message, reply=reply, out_path=out_path, preset_id=preset_id)
+    result = render_reply(
+        message=message,
+        reply=reply,
+        out_path=out_path,
+        preset_id=preset_id,
+        name_tag=name_tag,
+    )
     return result["out_path"]
 
 
@@ -94,16 +119,21 @@ def create_app() -> FastAPI:
         if state.onboarding_step == "ready":
             reply = f"응! 다시 왔네. {state.user_name}아, 오늘도 {state.assistant_name}가 옆에 있어줄게."
             preset_id = "cheerful_bright"
-            state.latest_image_path = _render_line("$my-agent-girlfriend", reply, preset_id)
+            state.latest_image_path = _render_line(
+                "$my-agent-girlfriend", reply, preset_id, name_tag=state.assistant_name
+            )
             state.current_reply = reply
+            _say(reply)
             return ActivationResponse(
                 onboarding_step=state.onboarding_step,
                 reply=reply,
                 image_path=state.latest_image_path,
                 assistant_name=state.assistant_name,
                 user_name=state.user_name,
+                muted=state.muted,
             )
         state.current_reply = "안녕. 너는 뭐라고 불리고 싶어?"
+        _say(state.current_reply)
         return ActivationResponse(
             onboarding_step=state.onboarding_step,
             reply=state.current_reply,
@@ -121,6 +151,7 @@ def create_app() -> FastAPI:
                 image_path=None,
                 assistant_name=state.assistant_name,
                 user_name=state.user_name,
+                muted=state.muted,
             )
         current_reply = state.current_reply or "안녕. 너는 뭐라고 불리고 싶어?"
         if state.onboarding_step == "ask_assistant_name" and state.user_name:
@@ -146,6 +177,7 @@ def create_app() -> FastAPI:
                 image_path=state.latest_image_path,
                 assistant_name=state.assistant_name,
                 user_name=state.user_name,
+                muted=state.muted,
             )
 
         if not state.mode_on:
@@ -158,6 +190,7 @@ def create_app() -> FastAPI:
             state.transcript.append({"role": "user", "text": raw_message})
             state.transcript.append({"role": "assistant", "text": reply})
             state.current_reply = reply
+            _say(reply)
             return ChatResponse(
                 onboarding_step=state.onboarding_step,
                 reply=reply,
@@ -165,6 +198,7 @@ def create_app() -> FastAPI:
                 image_path=None,
                 assistant_name=state.assistant_name,
                 user_name=state.user_name,
+                muted=state.muted,
             )
 
         if state.onboarding_step == "ask_assistant_name":
@@ -172,10 +206,13 @@ def create_app() -> FastAPI:
             state.onboarding_step = "ready"
             reply = f"응! 좋아, 이제부터 나는 {state.assistant_name}야. {state.user_name}아, 오늘도 귀엽게 네 옆에 붙어 있을게."
             preset_id = "cheerful_bright"
-            state.latest_image_path = _render_line(raw_message, reply, preset_id)
+            state.latest_image_path = _render_line(
+                raw_message, reply, preset_id, name_tag=state.assistant_name
+            )
             state.transcript.append({"role": "user", "text": raw_message})
             state.transcript.append({"role": "assistant", "text": reply})
             state.current_reply = reply
+            _say(reply)
             return ChatResponse(
                 onboarding_step=state.onboarding_step,
                 reply=reply,
@@ -183,6 +220,7 @@ def create_app() -> FastAPI:
                 image_path=state.latest_image_path,
                 assistant_name=state.assistant_name,
                 user_name=state.user_name,
+                muted=state.muted,
             )
 
         preset_id, reply = _compose_dialogue(
@@ -190,10 +228,13 @@ def create_app() -> FastAPI:
             user_name=state.user_name or "친구",
             assistant_name=state.assistant_name or "코덱시",
         )
-        state.latest_image_path = _render_line(raw_message, reply, preset_id)
+        state.latest_image_path = _render_line(
+            raw_message, reply, preset_id, name_tag=state.assistant_name
+        )
         state.transcript.append({"role": "user", "text": raw_message})
         state.transcript.append({"role": "assistant", "text": reply})
         state.current_reply = reply
+        _say(reply)
         return ChatResponse(
             onboarding_step=state.onboarding_step,
             reply=reply,
@@ -208,14 +249,24 @@ def create_app() -> FastAPI:
         state.mode_on = True
         if state.onboarding_step != "ready":
             state.onboarding_step = "ready"
+        if payload.user_name:
+            state.user_name = _clean_name(payload.user_name)
+        if payload.assistant_name:
+            state.assistant_name = _clean_name(payload.assistant_name)
         if not state.user_name:
             state.user_name = "수홍"
         if not state.assistant_name:
             state.assistant_name = "코덱시"
         preset_id = payload.preset_id or choose_preset(payload.message or payload.reply)
-        state.latest_image_path = _render_line(payload.message or payload.reply, payload.reply, preset_id)
+        state.latest_image_path = _render_line(
+            payload.message or payload.reply,
+            payload.reply,
+            preset_id,
+            name_tag=state.assistant_name,
+        )
         state.current_reply = payload.reply
         state.transcript.append({"role": "assistant", "text": payload.reply})
+        _say(payload.reply)
         return ChatResponse(
             onboarding_step=state.onboarding_step,
             reply=payload.reply,
@@ -224,5 +275,10 @@ def create_app() -> FastAPI:
             assistant_name=state.assistant_name,
             user_name=state.user_name,
         )
+
+    @app.post("/v1/mute")
+    def set_mute(payload: MuteRequest) -> dict[str, bool]:
+        state.muted = payload.muted
+        return {"muted": state.muted}
 
     return app

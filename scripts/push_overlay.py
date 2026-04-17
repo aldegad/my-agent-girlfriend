@@ -10,6 +10,8 @@ def main() -> None:
     parser.add_argument("--reply", required=True)
     parser.add_argument("--message", default="")
     parser.add_argument("--preset", default=None)
+    parser.add_argument("--user-name", dest="user_name", default=None)
+    parser.add_argument("--assistant-name", dest="assistant_name", default=None)
     parser.add_argument("--url", default="http://127.0.0.1:44777/v1/display")
     args = parser.parse_args()
 
@@ -17,6 +19,8 @@ def main() -> None:
         "message": args.message,
         "reply": args.reply,
         "preset_id": args.preset,
+        "user_name": args.user_name,
+        "assistant_name": args.assistant_name,
     }
     data = json.dumps(payload).encode("utf-8")
     request = urllib.request.Request(

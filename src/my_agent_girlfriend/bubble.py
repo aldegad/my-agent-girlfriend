@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 from .manifest import DEFAULT_FONT_PATH
 
@@ -26,9 +26,41 @@ def _load_font(size: int, font_path: Path | None = None) -> ImageFont.FreeTypeFo
     return ImageFont.load_default()
 
 
+LINE_GAP_RATIO = 0.55
+LETTER_TRACKING_RATIO = 0.04
+
+
+def _font_size_of(font: ImageFont.ImageFont) -> int:
+    size = getattr(font, "size", None)
+    if isinstance(size, (int, float)) and size > 0:
+        return int(size)
+    bbox = font.getbbox("Ag한")
+    return max(12, bbox[3] - bbox[1])
+
+
 def _line_height(font: ImageFont.ImageFont) -> int:
     bbox = font.getbbox("한글Ay")
-    return bbox[3] - bbox[1] + 6
+    base = bbox[3] - bbox[1]
+    gap = max(8, int(round(_font_size_of(font) * LINE_GAP_RATIO)))
+    return base + gap
+
+
+def _tracked_text(
+    draw: ImageDraw.ImageDraw,
+    xy: tuple[int, int],
+    text: str,
+    font: ImageFont.ImageFont,
+    fill: tuple[int, int, int, int],
+    tracking: int,
+) -> None:
+    if tracking <= 0:
+        draw.text(xy, text, font=font, fill=fill)
+        return
+    cursor_x, y = xy
+    for char in text:
+        draw.text((cursor_x, y), char, font=font, fill=fill)
+        char_width = draw.textbbox((0, 0), char, font=font)[2]
+        cursor_x += char_width + tracking
 
 
 def _measure(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.ImageFont) -> tuple[int, int]:
@@ -101,37 +133,270 @@ def compose_dialogue_image(
     text: str,
     layout: BubbleLayout,
     font_path: Path | None = None,
-    stroke_width: int = 5,
+    stroke_width: int = 4,
 ) -> Image.Image:
     image = base_image.convert("RGBA")
-    overlay = Image.new("RGBA", image.size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay)
+    width, height = image.size
 
     x1, y1, x2, y2 = layout.bubble_rect
     anchor_x, anchor_y = layout.tail_anchor
 
-    # Bubble fill and outline
-    draw.rounded_rectangle((x1, y1, x2, y2), radius=34, fill=(255, 255, 255, 248), outline=(0, 0, 0, 255), width=stroke_width)
+    radius = 38
+    fill_color = (255, 255, 255, 252)
+    outline_color = (38, 30, 36, 255)
 
+    # Drop shadow layer
+    shadow_offset = max(6, int(round(min(width, height) * 0.006)))
+    shadow_blur = max(8, int(round(min(width, height) * 0.012)))
+    shadow_layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    shadow_draw = ImageDraw.Draw(shadow_layer)
+    shadow_draw.rounded_rectangle(
+        (x1 + shadow_offset, y1 + shadow_offset, x2 + shadow_offset, y2 + shadow_offset),
+        radius=radius,
+        fill=(20, 14, 26, 110),
+    )
     bubble_mid_x = (x1 + x2) // 2
-    tail_base_left = bubble_mid_x - 42
-    tail_base_right = bubble_mid_x + 42
-    tail_base_y = y2 - 8
-    tail_points = [(tail_base_left, tail_base_y), (tail_base_right, tail_base_y), (anchor_x, anchor_y)]
-    draw.polygon(tail_points, fill=(255, 255, 255, 248), outline=(0, 0, 0, 255))
-    draw.line([tail_points[0], tail_points[2], tail_points[1]], fill=(0, 0, 0, 255), width=stroke_width)
+    tail_half = max(28, int(round((x2 - x1) * 0.05)))
+    tail_base_left = bubble_mid_x - tail_half
+    tail_base_right = bubble_mid_x + tail_half
+    tail_base_y = y2 - 6
+    shadow_draw.polygon(
+        [
+            (tail_base_left + shadow_offset, tail_base_y + shadow_offset),
+            (tail_base_right + shadow_offset, tail_base_y + shadow_offset),
+            (anchor_x + shadow_offset, anchor_y + shadow_offset),
+        ],
+        fill=(20, 14, 26, 110),
+    )
+    shadow_layer = shadow_layer.filter(ImageFilter.GaussianBlur(shadow_blur))
+
+    # Bubble layer
+    bubble_layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    bubble_draw = ImageDraw.Draw(bubble_layer)
+    bubble_draw.rounded_rectangle(
+        (x1, y1, x2, y2),
+        radius=radius,
+        fill=fill_color,
+        outline=outline_color,
+        width=stroke_width,
+    )
+    tail_points = [
+        (tail_base_left, tail_base_y),
+        (tail_base_right, tail_base_y),
+        (anchor_x, anchor_y),
+    ]
+    bubble_draw.polygon(tail_points, fill=fill_color)
+    bubble_draw.line(
+        [tail_points[0], tail_points[2]],
+        fill=outline_color,
+        width=stroke_width,
+    )
+    bubble_draw.line(
+        [tail_points[2], tail_points[1]],
+        fill=outline_color,
+        width=stroke_width,
+    )
+    # Cover the seam where tail meets bubble base
+    bubble_draw.rectangle(
+        (tail_base_left + stroke_width // 2, y2 - stroke_width, tail_base_right - stroke_width // 2, y2 + 1),
+        fill=fill_color,
+    )
 
     font, lines, _ = fit_dialogue(text, layout, font_path=font_path)
-    text_draw = ImageDraw.Draw(overlay)
-    padding_x = 32
-    padding_y = 24
-    cursor_y = y1 + padding_y
+    text_draw = ImageDraw.Draw(bubble_layer)
+    padding_x = 36
+    padding_y = 28
     line_height = _line_height(font)
+    block_height = line_height * len(lines)
+    available_height = (y2 - y1) - padding_y * 2
+    cursor_y = y1 + padding_y + max(0, (available_height - block_height) // 2)
+    text_color = (32, 24, 38, 255)
     for line in lines:
-        text_draw.text((x1 + padding_x, cursor_y), line, font=font, fill=(20, 20, 20, 255))
+        line_width = _measure(text_draw, line, font)[0]
+        line_x = x1 + ((x2 - x1) - line_width) // 2
+        text_draw.text((line_x, cursor_y), line, font=font, fill=text_color)
         cursor_y += line_height
 
-    return Image.alpha_composite(image, overlay)
+    composed = Image.alpha_composite(image, shadow_layer)
+    composed = Image.alpha_composite(composed, bubble_layer)
+    return composed
+
+
+@dataclass(frozen=True)
+class DialogueBoxLayout:
+    box_rect: tuple[int, int, int, int]
+    font_size_range: tuple[int, int]
+    name_tag: str | None = None
+
+
+def _tracked_width(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.ImageFont, tracking: int) -> int:
+    base = _measure(draw, text, font)[0]
+    return base + max(0, len(text) - 1) * tracking
+
+
+def _wrap_for_box(
+    draw: ImageDraw.ImageDraw,
+    text: str,
+    font: ImageFont.ImageFont,
+    max_width: int,
+    tracking: int,
+) -> list[str]:
+    tokens = text.split(" ")
+    if not tokens:
+        return [text]
+    lines: list[str] = []
+    current = tokens[0]
+    for token in tokens[1:]:
+        trial = f"{current} {token}".strip()
+        if _tracked_width(draw, trial, font, tracking) <= max_width:
+            current = trial
+            continue
+        lines.append(current)
+        current = token
+    if current:
+        lines.append(current)
+    expanded: list[str] = []
+    for line in lines:
+        if _tracked_width(draw, line, font, tracking) <= max_width:
+            expanded.append(line)
+            continue
+        chunk = ""
+        for char in line:
+            trial = f"{chunk}{char}"
+            if chunk and _tracked_width(draw, trial, font, tracking) > max_width:
+                expanded.append(chunk)
+                chunk = char
+            else:
+                chunk = trial
+        if chunk:
+            expanded.append(chunk)
+    return expanded
+
+
+def _fit_box_dialogue(
+    text: str,
+    box_rect: tuple[int, int, int, int],
+    font_size_range: tuple[int, int],
+    padding_x: int,
+    padding_y: int,
+    font_path: Path | None = None,
+) -> tuple[ImageFont.ImageFont, list[str], int]:
+    x1, y1, x2, y2 = box_rect
+    max_width = max(40, (x2 - x1) - padding_x * 2)
+    max_height = max(40, (y2 - y1) - padding_y * 2)
+    probe = ImageDraw.Draw(Image.new("RGBA", (x2 - x1, y2 - y1), (0, 0, 0, 0)))
+    min_size, max_size = font_size_range
+    for size in range(max_size, min_size - 1, -2):
+        font = _load_font(size, font_path=font_path)
+        tracking = max(0, int(round(size * LETTER_TRACKING_RATIO)))
+        lines = _wrap_for_box(probe, text, font, max_width, tracking)
+        height = _line_height(font) * len(lines)
+        longest = max((_tracked_width(probe, line, font, tracking) for line in lines), default=0)
+        if longest <= max_width and height <= max_height:
+            return font, lines, tracking
+    font = _load_font(min_size, font_path=font_path)
+    tracking = max(0, int(round(min_size * LETTER_TRACKING_RATIO)))
+    return font, _wrap_for_box(probe, text, font, max_width, tracking), tracking
+
+
+def compose_dialogue_box(
+    base_image: Image.Image,
+    text: str,
+    layout: DialogueBoxLayout,
+    font_path: Path | None = None,
+) -> Image.Image:
+    image = base_image.convert("RGBA")
+    width, height = image.size
+    x1, y1, x2, y2 = layout.box_rect
+
+    radius = max(20, int(round(min(width, height) * 0.022)))
+    stroke_width = max(3, int(round(min(width, height) * 0.0035)))
+    box_fill = (18, 14, 28, 205)
+    border_color = (255, 255, 255, 230)
+    text_color = (250, 248, 255, 255)
+    name_bg = (236, 116, 156, 235)
+    name_fg = (255, 255, 255, 255)
+
+    shadow_offset = max(6, int(round(min(width, height) * 0.006)))
+    shadow_blur = max(10, int(round(min(width, height) * 0.014)))
+    shadow_layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    ImageDraw.Draw(shadow_layer).rounded_rectangle(
+        (x1 + shadow_offset, y1 + shadow_offset, x2 + shadow_offset, y2 + shadow_offset),
+        radius=radius,
+        fill=(0, 0, 0, 130),
+    )
+    shadow_layer = shadow_layer.filter(ImageFilter.GaussianBlur(shadow_blur))
+
+    box_layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    box_draw = ImageDraw.Draw(box_layer)
+    box_draw.rounded_rectangle(
+        (x1, y1, x2, y2),
+        radius=radius,
+        fill=box_fill,
+        outline=border_color,
+        width=stroke_width,
+    )
+
+    padding_x = max(40, int(round((x2 - x1) * 0.055)))
+    padding_y = max(36, int(round((y2 - y1) * 0.20)))
+
+    if layout.name_tag:
+        name_font_size = max(22, int(round((y2 - y1) * 0.22)))
+        name_font = _load_font(name_font_size, font_path=font_path)
+        name_text = layout.name_tag
+        name_w = _measure(box_draw, name_text, name_font)[0]
+        tag_padding_x = max(18, int(round(name_font_size * 0.7)))
+        tag_padding_y = max(8, int(round(name_font_size * 0.3)))
+        tag_w = name_w + tag_padding_x * 2
+        tag_h = name_font_size + tag_padding_y * 2
+        tag_x1 = x1 + max(20, int(round((x2 - x1) * 0.025)))
+        tag_y2 = y1 + max(8, int(round((y2 - y1) * 0.06)))
+        tag_y1 = tag_y2 - tag_h
+        tag_x2 = tag_x1 + tag_w
+        box_draw.rounded_rectangle(
+            (tag_x1, tag_y1, tag_x2, tag_y2),
+            radius=max(12, tag_h // 3),
+            fill=name_bg,
+        )
+        box_draw.text(
+            (tag_x1 + tag_padding_x, tag_y1 + tag_padding_y - 2),
+            name_text,
+            font=name_font,
+            fill=name_fg,
+        )
+        body_top_offset = max(18, int(round(tag_h * 0.55)))
+    else:
+        body_top_offset = 0
+
+    body_rect = (x1, y1 + body_top_offset, x2, y2)
+    font, lines, tracking = _fit_box_dialogue(
+        text,
+        body_rect,
+        layout.font_size_range,
+        padding_x=padding_x,
+        padding_y=padding_y,
+        font_path=font_path,
+    )
+    line_height = _line_height(font)
+    block_height = line_height * len(lines)
+    box_center_y = (y1 + y2) // 2
+    text_draw = ImageDraw.Draw(box_layer)
+    cursor_y = box_center_y - block_height // 2 + max(0, body_top_offset // 6)
+    line_x = x1 + padding_x
+    for line in lines:
+        _tracked_text(
+            text_draw,
+            (line_x, cursor_y),
+            line,
+            font=font,
+            fill=text_color,
+            tracking=tracking,
+        )
+        cursor_y += line_height
+
+    composed = Image.alpha_composite(image, shadow_layer)
+    composed = Image.alpha_composite(composed, box_layer)
+    return composed
 
 
 def layout_from_manifest(preset: dict[str, object]) -> BubbleLayout:

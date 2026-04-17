@@ -11,6 +11,11 @@ struct BridgeActivationResponse: Decodable {
     let image_path: String?
     let assistant_name: String?
     let user_name: String?
+    let muted: Bool?
+}
+
+struct MuteResponse: Decodable {
+    let muted: Bool
 }
 
 struct BridgeChatResponse: Decodable {
@@ -33,6 +38,7 @@ final class BridgeViewModel: ObservableObject {
     @Published var currentImage: NSImage?
     @Published var isBooting = true
     @Published var overlayLine: String = "안녕. 너는 뭐라고 불리고 싶어?"
+    @Published var muted: Bool = false
 
     private var bridgeTask: Process?
 
@@ -44,8 +50,8 @@ final class BridgeViewModel: ObservableObject {
                 try? await Task.sleep(for: .seconds(1.2))
             }
             await activate()
-            await watchSession()
             isBooting = false
+            await watchSession()
         }
     }
 
@@ -77,6 +83,19 @@ final class BridgeViewModel: ObservableObject {
         guard let response: BridgeActivationResponse = await load(request) else { return }
         overlayLine = response.reply
         loadImage(path: response.image_path)
+        if let muted = response.muted { self.muted = muted }
+    }
+
+    func toggleMute() {
+        let next = !muted
+        muted = next
+        Task {
+            var request = URLRequest(url: bridgeBaseURL.appending(path: "/v1/mute"))
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try? JSONSerialization.data(withJSONObject: ["muted": next])
+            _ = await load(request) as MuteResponse?
+        }
     }
 
     private func watchSession() async {
@@ -119,39 +138,42 @@ struct FloatingPanelView: View {
     @StateObject private var viewModel = BridgeViewModel()
 
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [Color(red: 1.0, green: 0.96, blue: 0.95), Color(red: 1.0, green: 0.91, blue: 0.9)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                Group {
-                    if let image = viewModel.currentImage {
-                        Image(nsImage: image)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 720)
-                            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                    } else {
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .fill(.white.opacity(0.72))
-                            .overlay(
-                                Text(viewModel.isBooting ? "브릿지 깨우는 중..." : viewModel.overlayLine)
-                                    .font(.system(size: 18, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(.secondary)
-                                    .padding(24)
-                            )
-                            .frame(height: 720)
-                    }
+        ZStack(alignment: .topTrailing) {
+            ZStack {
+                if let image = viewModel.currentImage {
+                    Image(nsImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 480, height: 720)
+                        .clipped()
+                } else {
+                    Color(red: 1.0, green: 0.94, blue: 0.93)
+                    Text(viewModel.isBooting ? "브릿지 깨우는 중..." : viewModel.overlayLine)
+                        .font(.system(size: 22, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Color(red: 0.28, green: 0.17, blue: 0.2))
+                        .multilineTextAlignment(.center)
+                        .padding(32)
                 }
             }
-            .padding(8)
+            .frame(width: 480, height: 720)
+
+            Button(action: { viewModel.toggleMute() }) {
+                Image(systemName: viewModel.muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(viewModel.muted ? Color.white.opacity(0.92) : Color(red: 0.28, green: 0.17, blue: 0.2))
+                    .frame(width: 36, height: 36)
+                    .background(
+                        Circle()
+                            .fill(viewModel.muted ? Color(red: 0.92, green: 0.45, blue: 0.61).opacity(0.95) : Color.white.opacity(0.85))
+                    )
+                    .overlay(Circle().stroke(Color.black.opacity(0.10), lineWidth: 1))
+                    .shadow(color: Color.black.opacity(0.18), radius: 4, x: 0, y: 2)
+            }
+            .buttonStyle(.plain)
+            .padding(14)
+            .help(viewModel.muted ? "음소거 해제" : "음소거")
         }
-        .frame(width: 430, height: 740)
+        .frame(width: 480, height: 720)
         .task {
             viewModel.boot()
         }

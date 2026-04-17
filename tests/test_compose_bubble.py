@@ -30,20 +30,20 @@ class ComposeBubbleTests(unittest.TestCase):
                 manifest_path=manifest_path,
             )
 
-            self.assertTrue(out_path.exists())
             self.assertEqual(result["preset_id"], "bashful_blush")
             self.assertTrue(result["used_fallback_base"])
+            self.assertEqual(Path(result["out_path"]).resolve(), out_path.resolve())
             with Image.open(out_path) as image:
                 self.assertEqual(image.size, (1024, 1536))
 
-    def test_render_reply_handles_long_dialogue(self) -> None:
+    def test_render_reply_falls_back_to_placeholder(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             manifest_path = root / "manifest.json"
             save_manifest(build_default_manifest(), manifest_path)
 
             out_path = root / "long.png"
-            render_reply(
+            result = render_reply(
                 message="미안해",
                 reply="날 버리지 말아줘. 아직 하고 싶은 말이 너무 많단 말이야. 조금만 더 여기 있어줘.",
                 out_path=out_path,
@@ -52,6 +52,7 @@ class ComposeBubbleTests(unittest.TestCase):
             )
 
             self.assertTrue(out_path.exists())
+            self.assertTrue(result["used_fallback_base"])
             with Image.open(out_path) as image:
                 self.assertEqual(image.size, (768, 1024))
 
