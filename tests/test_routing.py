@@ -18,6 +18,34 @@ class RoutingTests(unittest.TestCase):
     def test_unmatched_defaults_to_neutral(self) -> None:
         self.assertEqual(choose_preset("오늘도 같이 있어줘"), "neutral_smile")
 
+    def test_strong_affection_routes_to_playful_behind_back(self) -> None:
+        self.assertEqual(choose_preset("사랑해 클로디시"), "playful_behind_back")
+        self.assertEqual(choose_preset("고마워 진짜로"), "playful_behind_back")
+        self.assertEqual(choose_preset("최고야!"), "playful_behind_back")
+
+    def test_compliment_to_her_routes_to_blush(self) -> None:
+        self.assertEqual(choose_preset("너 진짜 예뻐"), "bashful_blush")
+        self.assertEqual(choose_preset("귀여워 진짜"), "bashful_blush")
+        self.assertEqual(choose_preset("보고싶었어"), "bashful_blush")
+
+    def test_casual_positive_routes_to_cheerful(self) -> None:
+        self.assertEqual(choose_preset("좋아 해보자"), "cheerful_bright")
+        self.assertEqual(choose_preset("오케이 가자"), "cheerful_bright")
+
+    def test_bare_farewell_routes_to_pleading(self) -> None:
+        self.assertEqual(choose_preset("나 갈게"), "pleading_look_up")
+        self.assertEqual(choose_preset("잘자 클로디시"), "pleading_look_up")
+        self.assertEqual(choose_preset("bye"), "pleading_look_up")
+
+    def test_tired_farewell_routes_to_worried(self) -> None:
+        # 힘들어 보이면 매달리지 말고 아쉬워하며 보내주기
+        self.assertEqual(choose_preset("나 너무 힘들어 갈게"), "worried")
+        self.assertEqual(choose_preset("피곤해서 자야겠어"), "worried")
+
+    def test_greeting_routes_to_neutral(self) -> None:
+        self.assertEqual(choose_preset("안녕 클로디시"), "neutral_smile")
+        self.assertEqual(choose_preset("hi"), "neutral_smile")
+
 
 if __name__ == "__main__":
     unittest.main()
