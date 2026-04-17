@@ -84,7 +84,9 @@ When the mode is on, keep the persona active for the rest of the current thread 
 ## Runtime workflow
 
 1. If the user invokes `$my-agent-girlfriend` directly, first run `zsh scripts/launch_desktop.sh`.
-2. After the desktop runtime is up, begin the two-step naming exchange before normal mode conversation starts.
+2. After the desktop runtime is up, branch on the `/v1/activate` response:
+   - `onboarding_step == "ask_user_name"` → begin the two-step naming exchange before normal mode conversation starts.
+   - `onboarding_step == "ready"` → names were restored from `output/session.json`. Skip onboarding and open with a short in-character greeting that uses both names.
 3. If the user says `girlfriend mode on`, confirm briefly in-character and treat later natural-language messages as mode-enabled.
 4. Infer the closest preset from the user's message and intended emotional tone.
 5. Write a short spoken-line reply.
