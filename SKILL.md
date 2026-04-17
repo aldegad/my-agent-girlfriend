@@ -118,6 +118,8 @@ python3 scripts/push_overlay.py \
   --reply "<dialogue>" --message "<user message>"
 ```
 
+**Overlay dialogue length cap (60 chars).** The bridge truncates any `--reply` over 60 characters with `...` before rendering and storing it. Keep overlay lines short and punchy — they are a glance-target, not the main conversation surface. Long-form prose stays in the chat reply; the overlay should feel like a single in-character beat (one or two short sentences). If you need to say more, send a chat-only follow-up instead of stuffing the overlay.
+
 7. To attach an image inside the chat transcript itself, also render one with:
 
 ```bash

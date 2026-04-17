@@ -21,6 +21,14 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 APP_OUTPUT_DIR = ROOT_DIR / "output" / "app"
 SESSION_FILE = ROOT_DIR / "output" / "session.json"
 
+OVERLAY_MAX_CHARS = 60
+
+
+def _truncate_for_overlay(text: str, limit: int = OVERLAY_MAX_CHARS) -> str:
+    if len(text) <= limit:
+        return text
+    return text[:limit].rstrip() + "..."
+
 
 def _load_persisted_names() -> tuple[str | None, str | None]:
     if not SESSION_FILE.exists():
@@ -298,18 +306,19 @@ def create_app() -> FastAPI:
             state.onboarding_step = "ask_user_name"
         _maybe_persist()
         preset_id = payload.preset_id or choose_preset(payload.message or payload.reply)
+        overlay_reply = _truncate_for_overlay(payload.reply)
         state.latest_image_path = _render_line(
-            payload.message or payload.reply,
-            payload.reply,
+            payload.message or overlay_reply,
+            overlay_reply,
             preset_id,
             name_tag=state.assistant_name,
         )
-        state.current_reply = payload.reply
-        state.transcript.append({"role": "assistant", "text": payload.reply})
-        _say(payload.reply)
+        state.current_reply = overlay_reply
+        state.transcript.append({"role": "assistant", "text": overlay_reply})
+        _say(overlay_reply)
         return ChatResponse(
             onboarding_step=state.onboarding_step,
-            reply=payload.reply,
+            reply=overlay_reply,
             preset_id=preset_id,
             image_path=state.latest_image_path,
             assistant_name=state.assistant_name,
