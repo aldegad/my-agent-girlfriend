@@ -91,6 +91,7 @@ When the mode is on, keep the persona active for the rest of the current thread 
 - Prefer cached preset images from `assets/presets/manifest.json`.
 - If the selected preset image does not exist yet, fall back to the approved base image defined in the manifest.
 - Do not bulk-generate the 12-preset pack until the base image has been approved by the user.
+- **Preset IDs ending in `_v2` are work-in-progress alternates** (files live under `assets/presets/v2/`). They are intentionally not wired into the routing keyword table or any code path. Do not pass them as `--preset-id` and do not assume they will be picked automatically — they are placeholder slots until the user promotes them.
 
 ## Character lock
 
