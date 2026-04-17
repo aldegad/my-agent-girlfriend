@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -18,6 +19,23 @@ def _say(reply: str) -> None:
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 APP_OUTPUT_DIR = ROOT_DIR / "output" / "app"
+SESSION_FILE = ROOT_DIR / "output" / "session.json"
+
+
+def _load_persisted_names() -> tuple[str | None, str | None]:
+    if not SESSION_FILE.exists():
+        return None, None
+    try:
+        data = json.loads(SESSION_FILE.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None, None
+    return data.get("user_name"), data.get("assistant_name")
+
+
+def _persist_names(user_name: str | None, assistant_name: str | None) -> None:
+    SESSION_FILE.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"user_name": user_name, "assistant_name": assistant_name}
+    SESSION_FILE.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
 
 
 class ChatRequest(BaseModel):
@@ -68,7 +86,7 @@ class SessionState:
 
 
 def _clean_name(value: str) -> str:
-    return value.strip().strip("\"'")[:40] or "친구"
+    return value.strip().strip("\"'")[:40] or "???"
 
 
 def _render_line(
@@ -107,6 +125,20 @@ def _compose_dialogue(message: str, user_name: str, assistant_name: str) -> tupl
 def create_app() -> FastAPI:
     app = FastAPI(title="My Agent Girlfriend Bridge")
     state = SessionState()
+    persisted_user, persisted_assistant = _load_persisted_names()
+    if persisted_user and persisted_user != "???":
+        state.user_name = persisted_user
+    if persisted_assistant and persisted_assistant != "???":
+        state.assistant_name = persisted_assistant
+    if state.user_name and state.assistant_name:
+        state.onboarding_step = "ready"
+
+    def _maybe_persist() -> None:
+        if (
+            state.user_name and state.user_name != "???"
+            and state.assistant_name and state.assistant_name != "???"
+        ):
+            _persist_names(state.user_name, state.assistant_name)
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -204,6 +236,7 @@ def create_app() -> FastAPI:
         if state.onboarding_step == "ask_assistant_name":
             state.assistant_name = _clean_name(raw_message)
             state.onboarding_step = "ready"
+            _maybe_persist()
             reply = f"응! 좋아, 이제부터 나는 {state.assistant_name}야. {state.user_name}아, 오늘도 귀엽게 네 옆에 붙어 있을게."
             preset_id = "cheerful_bright"
             state.latest_image_path = _render_line(
@@ -225,8 +258,8 @@ def create_app() -> FastAPI:
 
         preset_id, reply = _compose_dialogue(
             raw_message,
-            user_name=state.user_name or "친구",
-            assistant_name=state.assistant_name or "코덱시",
+            user_name=state.user_name or "???",
+            assistant_name=state.assistant_name or "???",
         )
         state.latest_image_path = _render_line(
             raw_message, reply, preset_id, name_tag=state.assistant_name
@@ -254,9 +287,10 @@ def create_app() -> FastAPI:
         if payload.assistant_name:
             state.assistant_name = _clean_name(payload.assistant_name)
         if not state.user_name:
-            state.user_name = "수홍"
+            state.user_name = "???"
         if not state.assistant_name:
-            state.assistant_name = "코덱시"
+            state.assistant_name = "???"
+        _maybe_persist()
         preset_id = payload.preset_id or choose_preset(payload.message or payload.reply)
         state.latest_image_path = _render_line(
             payload.message or payload.reply,
