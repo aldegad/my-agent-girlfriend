@@ -122,7 +122,7 @@ Claude Code랑 Codex CLI에 붙여 쓰는, 로컬에서 도는 작은 애니풍 
 - **로컬 브릿지** — `127.0.0.1:44777`에서 도는 FastAPI. 오버레이 상태/이름/음소거 플래그를 들고 있고, 이름은 `output/session.json`에 영속화돼서 세션 다시 켜도 온보딩 안 다시 함
 - **macOS 플로팅 오버레이** — SwiftUI로 짠 떠다니는 창. 우측 상단 스피커 토글로 보이스 음소거 가능
 - **프리셋 캐릭터 14종** — 14개 표정 + 박스 합성 헬퍼. 메시지 톤 보고 자동 라우팅
-- **일본어 보이스 클립** — Gemini TTS로 미리 뽑아놓은 9개 (`hi`/`dekita`/`otsukare`/`yatta`/`tadaima` 리액션, `uun`/`etto`/`a`/`fufu` 사색용). 음소거 시 자동 스킵
+- **일본어 보이스 클립** — Gemini TTS로 미리 뽑아놓은 11개 (`hi`/`dekita`/`otsukare`/`yatta`/`tadaima` 리액션, `uun`/`etto`/`a`/`fufu` 사색용, `un`/`hee` 중립 폴백용). 음소거 시 자동 스킵
 
 ### 폴더 구조
 

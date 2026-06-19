@@ -3,7 +3,32 @@ import AppKit
 import SwiftUI
 
 private let bridgeBaseURL = URL(string: "http://127.0.0.1:44777")!
-private let projectRoot = "/Users/soohongkim/Documents/workspace/personal/my-agent-girlfriend"
+
+/// Resolve the repo root at runtime by walking up from the running executable
+/// until we find the `scripts/run_bridge.py` anchor. This keeps the standalone
+/// app working on any fresh clone instead of a hardcoded personal path.
+private func resolveProjectRoot() -> String? {
+    let marker = "scripts/run_bridge.py"
+    let fileManager = FileManager.default
+    var dir = URL(fileURLWithPath: CommandLine.arguments[0]).resolvingSymlinksInPath().deletingLastPathComponent()
+    while true {
+        if fileManager.fileExists(atPath: dir.appendingPathComponent(marker).path) {
+            return dir.path
+        }
+        let parent = dir.deletingLastPathComponent()
+        if parent.path == dir.path { break }
+        dir = parent
+    }
+    // Fallback: the current working directory (e.g. when launched via the
+    // one-liner script that already `cd`s into the repo).
+    let cwd = fileManager.currentDirectoryPath
+    if fileManager.fileExists(atPath: (cwd as NSString).appendingPathComponent(marker)) {
+        return cwd
+    }
+    return nil
+}
+
+private let projectRoot = resolveProjectRoot()
 
 struct BridgeActivationResponse: Decodable {
     let onboarding_step: String
@@ -56,6 +81,10 @@ final class BridgeViewModel: ObservableObject {
     }
 
     private func launchBridge() {
+        guard let projectRoot else {
+            overlayLine = "브릿지 위치를 못 찾았어. repo 안에서 실행해줘."
+            return
+        }
         let task = Process()
         task.currentDirectoryURL = URL(fileURLWithPath: projectRoot)
         task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
