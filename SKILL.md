@@ -88,8 +88,8 @@ When the mode is on, keep the persona active for the rest of the current thread 
 - Generate or reuse the character art without text first, then add the speech bubble as a local post-process step.
 - Prefer cached preset images from `assets/presets/manifest.json`.
 - If the selected preset image does not exist yet, fall back to the approved base image defined in the manifest.
-- Do not bulk-generate the 12-preset pack until the base image has been approved by the user.
-- **Preset IDs ending in `_v2` are work-in-progress alternates** (files live under `assets/presets/v2/`). They are intentionally not wired into the routing keyword table or any code path. Do not pass them as `--preset-id` and do not assume they will be picked automatically — they are placeholder slots until the user promotes them.
+- Do not bulk-generate the live preset pack until the base image has been approved by the user.
+- **Presets marked `usage: "work_in_progress"` in `assets/presets/manifest.json` are alternates** (current files live under `assets/presets/v2/`). They are intentionally not wired into the routing keyword table or any code path. Do not pass them as `--preset-id` and do not assume they will be picked automatically until the user promotes them.
 
 ## Character lock
 
@@ -156,7 +156,7 @@ python3 scripts/play_voice.py --clip <id> --background
 
 - Base character first. Use the built-in `image_gen` tool to generate exactly one speech-bubble-free base image.
 - Save the approved base image under `assets/base/`.
-- After approval, generate the preset pack using the reference prompt pack in `references/preset-pack.md` and sync the files into the manifest with:
+- After approval, generate the live preset pack from `assets/presets/manifest.json` and the visual guidance in `references/preset-pack.md`, then sync the files into the manifest with:
 
 ```bash
 python3 scripts/bootstrap_presets.py --base-image assets/base/base-character-v1-approved.png --sync-existing
@@ -165,4 +165,4 @@ python3 scripts/bootstrap_presets.py --base-image assets/base/base-character-v1-
 ## References
 
 - Persona notes: `references/persona.md`
-- Preset definitions and prompts: `references/preset-pack.md`
+- Preset visual guidance: `references/preset-pack.md`

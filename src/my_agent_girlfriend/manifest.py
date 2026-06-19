@@ -7,6 +7,8 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST_PATH = PROJECT_ROOT / "assets" / "presets" / "manifest.json"
 DEFAULT_FONT_PATH = Path("/System/Library/Fonts/AppleSDGothicNeo.ttc")
+LIVE_PRESET_USAGE = "live"
+WORK_IN_PROGRESS_PRESET_USAGE = "work_in_progress"
 
 
 def load_manifest(manifest_path: Path | None = None) -> dict[str, Any]:
@@ -44,6 +46,13 @@ def get_preset(manifest: dict[str, Any], preset_id: str) -> dict[str, Any]:
     raise KeyError(f"Unknown preset id: {preset_id}")
 
 
+def is_live_preset(preset: dict[str, Any]) -> bool:
+    return preset.get("usage", LIVE_PRESET_USAGE) == LIVE_PRESET_USAGE
+
+
+def live_presets(manifest: dict[str, Any]) -> list[dict[str, Any]]:
+    return [preset for preset in manifest["presets"] if is_live_preset(preset)]
+
+
 def get_base_asset(manifest: dict[str, Any]) -> Path | None:
     return resolve_path(manifest.get("character", {}).get("base_asset"))
-

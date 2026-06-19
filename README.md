@@ -26,7 +26,7 @@ A small local desktop companion you bolt onto Claude Code or Codex CLI. One slas
 | **apology_look_up** | **sleeping_hands_folded** | | |
 | <img src="assets/presets/apology_look_up.png" width="180" alt="apology_look_up" /> | <img src="assets/presets/sleeping_hands_folded.png" width="180" alt="sleeping_hands_folded" /> | | |
 
-Preset metadata (emotion tags, bubble rects, tail anchors) lives in [`assets/presets/manifest.json`](assets/presets/manifest.json).
+Preset metadata (emotion tags, bubble rects, tail anchors) lives in [`assets/presets/manifest.json`](assets/presets/manifest.json). Entries marked `usage: "work_in_progress"` are tracked alternates and are not counted as live routed presets.
 
 ### What it includes
 
@@ -114,7 +114,7 @@ Claude Code랑 Codex CLI에 붙여 쓰는, 로컬에서 도는 작은 애니풍 
 | **apology_look_up** | **sleeping_hands_folded** | | |
 | <img src="assets/presets/apology_look_up.png" width="180" alt="apology_look_up" /> | <img src="assets/presets/sleeping_hands_folded.png" width="180" alt="sleeping_hands_folded" /> | | |
 
-프리셋 메타(감정 태그, 박스 좌표, 꼬리 앵커 등)는 전부 [`assets/presets/manifest.json`](assets/presets/manifest.json)에 박혀 있어. 새 표정 추가하면 매니페스트만 갱신하면 어시스턴트가 자동으로 골라서 써.
+프리셋 메타(감정 태그, 박스 좌표, 꼬리 앵커 등)는 전부 [`assets/presets/manifest.json`](assets/presets/manifest.json)에 박혀 있어. `usage: "work_in_progress"` 로 표시된 항목은 대체 후보라 live 라우팅 프리셋 개수에는 포함하지 않아. 새 표정 추가하면 매니페스트만 갱신하면 어시스턴트가 자동으로 골라서 써.
 
 ### 포함된 기능
 

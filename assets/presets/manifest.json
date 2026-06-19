@@ -430,7 +430,8 @@
       ],
       "notes": "V2 pleading look-up with a sweeter, more charming mood.",
       "image_path": "assets/presets/v2/pleading_look_up.png",
-      "status": "ready"
+      "status": "ready",
+      "usage": "work_in_progress"
     },
     {
       "id": "apology_look_up_v2",
@@ -458,7 +459,8 @@
       ],
       "notes": "V2 apology look-up with a softer, more appealing expression.",
       "image_path": "assets/presets/v2/apology_look_up.png",
-      "status": "ready"
+      "status": "ready",
+      "usage": "work_in_progress"
     }
   ]
 }

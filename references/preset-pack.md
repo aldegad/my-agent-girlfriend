@@ -21,63 +21,13 @@ All images are speech-bubble-free character renders. Dialogue is added only in p
 
 ## Presets
 
-### neutral_smile
-- Framing: upper body
-- Camera: eye level
-- Mood: soft everyday smile
+Canonical preset IDs, emotion tags, framing, camera, and notes live in
+`assets/presets/manifest.json`. Generate the prompt pack from that manifest with:
 
-### cheerful_bright
-- Framing: upper body
-- Camera: eye level
-- Mood: delighted and lively
+```bash
+python3 scripts/bootstrap_presets.py --output-prompts output/preset-prompts.json
+```
 
-### bashful_blush
-- Framing: upper body
-- Camera: eye level
-- Mood: shy, blushing, slightly turned away
-
-### playful_tease
-- Framing: upper body
-- Camera: eye level
-- Mood: teasing grin, light mischief
-
-### curious_tilt
-- Framing: upper body
-- Camera: eye level
-- Mood: head tilt, curious eyes
-
-### surprised_wide
-- Framing: upper body
-- Camera: eye level
-- Mood: surprised, widened eyes
-
-### pouty
-- Framing: upper body
-- Camera: eye level
-- Mood: puffed cheeks or sulky pout
-
-### worried
-- Framing: upper body
-- Camera: eye level
-- Mood: anxious, hesitant
-
-### teary
-- Framing: upper body
-- Camera: eye level
-- Mood: tears gathering, trying not to cry
-
-### crying_closed_eyes
-- Framing: upper body
-- Camera: eye level
-- Mood: eyes closed while crying
-
-### pleading_look_up
-- Framing: half body
-- Camera: slight high angle, viewer looking down, character looking up
-- Mood: vulnerable, asking not to be left
-
-### apology_look_up
-- Framing: half body
-- Camera: slight high angle, viewer looking down, character looking up
-- Mood: apologetic, remorseful, on the verge of tears
-
+Only manifest entries without `usage: "work_in_progress"` are live generation/routing
+targets. Work-in-progress alternates remain in the manifest so they can be promoted
+without inventing a second preset list.

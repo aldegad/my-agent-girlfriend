@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import unittest
 
-from my_agent_girlfriend.routing import choose_preset
+from my_agent_girlfriend.manifest import live_presets, load_manifest
+from my_agent_girlfriend.routing import DEFAULT_PRESET, KEYWORD_WEIGHTS, choose_preset
 
 
 class RoutingTests(unittest.TestCase):
@@ -46,7 +47,12 @@ class RoutingTests(unittest.TestCase):
         self.assertEqual(choose_preset("안녕 클로디시"), "neutral_smile")
         self.assertEqual(choose_preset("hi"), "neutral_smile")
 
+    def test_routing_table_only_targets_live_manifest_presets(self) -> None:
+        live_ids = {preset["id"] for preset in live_presets(load_manifest())}
+
+        self.assertIn(DEFAULT_PRESET, live_ids)
+        self.assertLessEqual(set(KEYWORD_WEIGHTS), live_ids)
+
 
 if __name__ == "__main__":
     unittest.main()
-
